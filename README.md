@@ -47,4 +47,4 @@ Default: `true`
 
 ## License
 
-MIT © RiPeLLabs
+MIT © Rɪpəl Labs
