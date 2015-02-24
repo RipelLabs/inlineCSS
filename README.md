@@ -12,20 +12,34 @@ A [NodeJS](http://nodejs.org/) package for inlining external stylesheets and emb
 
 ## Methods
 
-### inlineHtml(html, options)
+### inlineHtml(html[, options], callback)
 
 Inlines raw html content
 
 - `html` - Raw html
 - `options` - See Options below
+- `callback` - Function
 
-### inlineFile(inFile, outFile, options)
+		inlineCSS.inlineHtml(html, function(inlineHtml) {
+			console.log(inlineHtml);
+		});
+
+Returns `inlined html` as an argument.
+
+### inlineFile(inFile, outFile[, options], callback)
 
 Creates an inlined html file
 
 - `inFile` - Location of file to be inlined
 - `outFile` - Destination of generated file
 - `options` - See Options below
+- `callback` - Function
+
+		inlineCSS.inlineFile(inFile, outFile, function() {
+			console.log('success');
+		});
+
+No return arguments.
 
 ## Options
 

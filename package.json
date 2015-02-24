@@ -1,6 +1,6 @@
 {
   "name": "inlinecss",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Inlines stylesheets and style tags into html content",
   "author": "Ripel Labs",
   "main": "index.js",

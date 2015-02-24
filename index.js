@@ -1,23 +1,82 @@
 var fs = require('fs'),
+    path = require('path'),
     cheerio = require('cheerio'),
     parseCSS = require('css-rules');
 
-exports.inlineFile = function(inFile, outFile, options) {
-    options = options || {};
-    options.cssRoot = inFile.substring(0,Math.max(inFile.lastIndexOf("/"), inFile.lastIndexOf("\\"))+1);
+// EXPORTS: INLINE FILE
+exports.inlineFile = function(inFile, outFile, param1, param2) {
+    var options = {},
+        callback = null;
     
-    var html = inline(fs.readFileSync(inFile, 'utf8'), options);
+    if(param1) {
+        if(typeof param1 === 'object')
+            options = param1;
+        else if(typeof param1 === 'function')
+            callback = param1;
+    }
+    
+    if(param2) {
+        if(typeof param2 === 'function' && callback === null) {
+            callback = param2;
+        } else {
+            console.log('Error: Invalid param');
+            return;   
+        }
+    }
+    
+    if(callback === null) {
+        console.log('Error: No callback function specified');
+        return;   
+    }
 
-    // Write to file
-    fs.writeFileSync(outFile, html, 'utf8');
+    makeDirectoryRecursive(path.dirname(outFile), function() {
+       options.cssRoot = inFile.substring(0,inFile.lastIndexOf(getPathSeparator(inFile))+1);
+
+        fs.readFile(inFile, 'utf8', function(err, html) {
+           inline(html, options, function(inlineHtml) {
+                // Write to file
+                fs.writeFile(outFile, inlineHtml, 'utf8', function() {
+                    callback();   
+                }); 
+            }); 
+        });        
+    });
 };
 
-exports.inlineHtml = function(html, options) {
-    options = options || {};
-    return inline(html, options);
+// EXPORTS: INLINE HTML
+exports.inlineHtml = function(html, param1, param2) {
+    var options = {},
+        callback = null;
+    
+    if(param1) {
+        if(typeof param1 === 'object')
+            options = param1;
+        else if(typeof param1 === 'function')
+            callback = param1;
+    }
+    
+    if(param2) {
+        if(typeof param2 === 'function' && callback === null) {
+            callback = param2;
+        } else {
+            console.log('Error: Invalid param');
+            return;   
+        }
+    }
+    
+    if(callback === null) {
+        console.log('Error: No callback function specified');
+        return;   
+    }
+    
+    inline(html, options, function(html) {
+        callback(html);
+    });
+    
 };
 
-function inline(html, options) {
+// FUNCTION: inline
+function inline(html, options, callback) {
     var settings = {
         cssRoot: '',
         removeClasses: true
@@ -27,28 +86,72 @@ function inline(html, options) {
 
     $ = cheerio.load(html);
     
-    // Loop through external stylesheets   
+    var stylesheets = [];
+    
     $('link').each(function(i, elem) {
         // Ignore remote files
-        if(elem.attribs.href.substring(0, 4) != 'http' && elem.attribs.href.substring(0, 3) != 'ftp') {            
-            embedStyles(fs.readFileSync(settings.cssRoot + elem.attribs.href, 'utf8'));
+        if(elem.attribs.href.substring(0, 4) != 'http' && elem.attribs.href.substring(0, 3) != 'ftp')
+            stylesheets.push(settings.cssRoot + elem.attribs.href);
             $(this).remove();
-        }
     });
+    
+    inlineStylesheetRecursive(stylesheets, function() {
+        
+        // Loop through embedded style tags
+        $('style').each(function(i, elem) {
+            embedStyles($(this).text());
+            $(this).remove();
+        });
 
-    // Loop through embedded style tags
-    $('style').each(function(i, elem) {
-        embedStyles($(this).text());
-        $(this).remove();
-    });
-    
-    if(settings.removeClasses == true) {
-        $('*').removeAttr('class');
-    }
-    
-    return $.html();
+        if(settings.removeClasses == true) {
+            $('*').removeAttr('class');
+        }
+
+        callback($.html());     
+    });  
 }
 
+// FUNCTION: inlineStylesheetRecursive
+// Loop through external stylesheets
+function inlineStylesheetRecursive(stylesheets, callback) {
+    if(stylesheets.length > 0) {
+        fs.readFile(stylesheets[0], 'utf8', function(err, css) {
+            embedStyles(css);
+            stylesheets.shift();
+            inlineStylesheetRecursive(stylesheets, callback);
+        });    
+    } else {
+        callback();   
+    }
+}
+
+// FUNCTION: makeDirectoryRecursive
+function makeDirectoryRecursive(dirPath, callback) {
+    fs.exists(dirPath, function(exists) {
+        if(!exists) {
+            fs.mkdir(dirPath, function(err) {
+                if (err && err.code == 'ENOENT') {
+                      makeDirectoryRecursive(path.dirname(dirPath));
+                      makeDirectoryRecursive(dirPath, callback);
+                } else {
+                    if(callback) callback();
+                }
+            });
+        } else {
+            if(callback) callback();
+        }
+    });  
+}
+
+// FUNCTION: getPathSeparator
+function getPathSeparator(path) {
+    if(path.indexOf('\\') > -1)
+        return '\\';
+    else
+        return '/';   
+};
+
+// FUNCTION: embedStyles
 function embedStyles(css) {
     parseCSS(css).forEach(function (rule) {
         var selector = rule[0];
