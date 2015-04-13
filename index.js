@@ -104,7 +104,7 @@ function inline(html, options, callback) {
         });
 
         if(settings.removeClasses == true) {
-            $('*').removeAttr('class');
+            $('*').removeAttr('id').removeAttr('class');
         }
 
         callback($.html());     
@@ -115,11 +115,18 @@ function inline(html, options, callback) {
 // Loop through external stylesheets
 function inlineStylesheetRecursive(stylesheets, callback) {
     if(stylesheets.length > 0) {
-        fs.readFile(stylesheets[0], 'utf8', function(err, css) {
-            embedStyles(css);
-            stylesheets.shift();
-            inlineStylesheetRecursive(stylesheets, callback);
-        });    
+		fs.access(stylesheets[0], function(err) {
+			if(!err) {
+				fs.readFile(stylesheets[0], 'utf8', function(err, css) {
+					embedStyles(css);
+					stylesheets.shift();
+					inlineStylesheetRecursive(stylesheets, callback);
+				}); 
+			} else {
+				console.log('Error: Could not locate stylesheet %s', stylesheets[0]);
+				return;
+			}
+		});		
     } else {
         callback();   
     }
@@ -127,8 +134,8 @@ function inlineStylesheetRecursive(stylesheets, callback) {
 
 // FUNCTION: makeDirectoryRecursive
 function makeDirectoryRecursive(dirPath, callback) {
-    fs.exists(dirPath, function(exists) {
-        if(!exists) {
+    fs.access(dirPath, function(err) {
+        if(err) {
             fs.mkdir(dirPath, function(err) {
                 if (err && err.code == 'ENOENT') {
                       makeDirectoryRecursive(path.dirname(dirPath));
@@ -169,8 +176,20 @@ function embedStyles(css) {
                     style += ';';
             }
 
-            for(var i=0; i<data.length; i++)
-                style += ' ' + data[i] + ':' + data[data[i]] + ';';
+			// Loop through new rules
+            for(var i=0; i<data.length; i++) {
+				var currentStyle = style.split(';');
+				for(var j in currentStyle) {
+					var styleSplit = currentStyle[j].split(':');
+					
+					// Remove old style
+					if(styleSplit[0] && data[i].toLowerCase().trim() == styleSplit[0].toLowerCase().trim()) {
+						style = style.replace(currentStyle[j] + ';', '');
+					}
+				}
+				
+				style += ' ' + data[i] + ':' + data[data[i]] + ';';
+			}
 
             $elem.attr('style', style.trim());
         }
