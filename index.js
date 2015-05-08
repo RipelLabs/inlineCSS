@@ -19,14 +19,12 @@ exports.inlineFile = function(inFile, outFile, param1, param2) {
         if(typeof param2 === 'function' && callback === null) {
             callback = param2;
         } else {
-            console.log('Error: Invalid param');
-            return;   
+            throw 'Error: Invalid param';  
         }
     }
     
     if(callback === null) {
-        console.log('Error: No callback function specified');
-        return;   
+        throw 'Error: No callback function specified';     
     }
 
     makeDirectoryRecursive(path.dirname(outFile), function() {
@@ -36,7 +34,7 @@ exports.inlineFile = function(inFile, outFile, param1, param2) {
            inline(html, options, function(inlineHtml) {
                 // Write to file
                 fs.writeFile(outFile, inlineHtml, 'utf8', function() {
-                    callback();   
+                    return callback();   
                 }); 
             }); 
         });        
@@ -59,18 +57,16 @@ exports.inlineHtml = function(html, param1, param2) {
         if(typeof param2 === 'function' && callback === null) {
             callback = param2;
         } else {
-            console.log('Error: Invalid param');
-            return;   
+            throw 'Error: Invalid param';
         }
     }
     
     if(callback === null) {
-        console.log('Error: No callback function specified');
-        return;   
+        throw 'Error: No callback function specified';  
     }
     
     inline(html, options, function(html) {
-        callback(html);
+        return callback(html);
     });
     
 };
@@ -84,10 +80,10 @@ function inline(html, options, callback) {
 
     for(var prop in settings) { if(typeof options[prop] !== 'undefined') settings[prop] = options[prop]; }
 
-    $ = cheerio.load(html);
+    $ = cheerio.load(html, { decodeEntities: false });
     
     var stylesheets = [];
-    
+
     $('link').each(function(i, elem) {
         // Ignore remote files
         if(elem.attribs.href.substring(0, 4) != 'http' && elem.attribs.href.substring(0, 3) != 'ftp')
@@ -107,7 +103,7 @@ function inline(html, options, callback) {
             $('*').removeAttr('id').removeAttr('class');
         }
 
-        callback($.html());     
+        return callback($.html());     
     });  
 }
 
@@ -123,12 +119,12 @@ function inlineStylesheetRecursive(stylesheets, callback) {
 					inlineStylesheetRecursive(stylesheets, callback);
 				}); 
 			} else {
-				console.log('Error: Could not locate stylesheet %s', stylesheets[0]);
-				return;
+				console.log('Error: ENOENT, could not access stylesheet %s', err.path);
+				return callback(false);
 			}
 		});		
     } else {
-        callback();   
+        return callback();   
     }
 }
 
@@ -141,11 +137,13 @@ function makeDirectoryRecursive(dirPath, callback) {
                       makeDirectoryRecursive(path.dirname(dirPath));
                       makeDirectoryRecursive(dirPath, callback);
                 } else {
-                    if(callback) callback();
+                    if(callback) 
+						return callback();
                 }
             });
         } else {
-            if(callback) callback();
+            if(callback) 
+				return callback();
         }
     });  
 }
