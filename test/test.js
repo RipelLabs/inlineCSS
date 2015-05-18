@@ -4,7 +4,7 @@ var inlineCSS = require('../index'),
 var inFile = 'test/html/in.html',
 	outFile = 'test/html/content/generated/out.html';
 
-	inlineCSS.inlineFile(inFile, outFile, function() {
+	inlineCSS.inlineFile(inFile, outFile, { decodeEntities: false }, function() {
 		console.log('Test: Inlining file');
 		console.log('----------------------------------');
 		console.log('File: ' + inFile + '\n');

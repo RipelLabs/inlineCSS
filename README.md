@@ -49,6 +49,18 @@ Define an optional base directory for external stylesheets
 Type: `String`  
 Default: `''`
 
+#### options.decodeEntities
+Decode HTML entities. Eg: `& -> &amp;`
+
+Type: `Boolean`  
+Default: `true`
+
+#### options.inlineStyleTags
+Inline content in `<style>` tags found in the HTML document
+
+Type: `Boolean`  
+Default: `true`
+
 #### options.removeClasses
 Remove class attributes
 

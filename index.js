@@ -78,9 +78,13 @@ function inline(html, options, callback) {
         removeClasses: true
     };
 
+	// Check options defaults
+	options.decodeEntities = (typeof options.decodeEntities == 'undefined' ? true : options.decodeEntities);
+	options.inlineStyleTags = (typeof options.inlineStyleTags == 'undefined' ? true : options.inlineStyleTags);
+
     for(var prop in settings) { if(typeof options[prop] !== 'undefined') settings[prop] = options[prop]; }
 
-    $ = cheerio.load(html, { decodeEntities: false });
+    $ = cheerio.load(html, { decodeEntities: options.decodeEntities });
     
     var stylesheets = [];
 
@@ -94,10 +98,12 @@ function inline(html, options, callback) {
     inlineStylesheetRecursive(stylesheets, function() {
         
         // Loop through embedded style tags
-        $('style').each(function(i, elem) {
-            embedStyles($(this).text());
-            $(this).remove();
-        });
+		if(options.inlineStyleTags) { 
+			$('style').each(function(i, elem) {
+				embedStyles($(this).text());
+				$(this).remove();
+			});
+		}
 
         if(settings.removeClasses == true) {
             $('*').removeAttr('id').removeAttr('class');
