@@ -79,8 +79,8 @@ function inline(html, options, callback) {
     };
 
 	// Check options defaults
-	options.decodeEntities = (typeof options.decodeEntities == 'undefined' ? true : options.decodeEntities);
-	options.inlineStyleTags = (typeof options.inlineStyleTags == 'undefined' ? true : options.inlineStyleTags);
+	options.decodeEntities = options.decodeEntities == false ?  false : true;
+	options.inlineStyleTags = options.inlineStyleTags == false ?  false : true;
 
     for(var prop in settings) { if(typeof options[prop] !== 'undefined') settings[prop] = options[prop]; }
 
