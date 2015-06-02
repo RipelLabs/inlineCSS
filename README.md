@@ -61,8 +61,9 @@ Inline content in `<style>` tags found in the HTML document
 Type: `Boolean`  
 Default: `true`
 
-#### options.removeClasses
-Remove class attributes
+#### options.removeAttributes
+Remove `class` and `id` attributes  
+Provide `keepattr` in the attribute value to prevent an attribute from being removed.
 
 Type: `Boolean`  
 Default: `true`

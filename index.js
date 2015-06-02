@@ -75,7 +75,7 @@ exports.inlineHtml = function(html, param1, param2) {
 function inline(html, options, callback) {
     var settings = {
         cssRoot: '',
-        removeClasses: true
+        removeAttributes: true
     };
 
 	// Check options defaults
@@ -105,8 +105,18 @@ function inline(html, options, callback) {
 			});
 		}
 
-        if(settings.removeClasses == true) {
-            $('*').removeAttr('id').removeAttr('class');
+        if(settings.removeAttributes == true) {
+			$('*').each(function(i, elem) {
+				// Remove class attributes
+				if($(elem).attr('class') && $(elem).attr('class').indexOf('keepattr') < 0) {
+					$(elem).removeAttr('class');
+				}
+				
+				// Remove id attributes
+				if($(elem).attr('id') && $(elem).attr('id').indexOf('keepattr') < 0) {
+					$(elem).removeAttr('id');
+				}
+			});
         }
 
         return callback($.html());     
